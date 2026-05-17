@@ -38,3 +38,9 @@ out/
 
 ### Kotlin ###
 .kotlin
+
+# database
+/database
+
+# Gemini
+.geminiignore
