@@ -3,9 +3,9 @@ spring:
     name: chatchat
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DB_HOST}:3306/chatchat_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:3306/chatchat_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+    username: ${DB_USERNAME:chat}
+    password: ${DB_PASSWORD:1234}
 
   jpa:
     hibernate:
@@ -14,3 +14,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  
+  jwt:
+    secret: "your-super-secret-key-that-is-long-enough-to-be-secure"
+    expiration: 86400000 # 24시간 (밀리초 단위)

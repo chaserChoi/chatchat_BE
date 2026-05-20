@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>CHATCHAT STOMP Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        input { width: 100%; padding: 8px; margin-bottom: 10px; }
+        button { padding: 10px 15px; margin-right: 5px; cursor: pointer; }
+        #log { background: #f4f4f4; padding: 10px; height: 300px; overflow-y: scroll; margin-top: 20px; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h2>CHATCHAT 백엔드 실시간 소켓 테스트</h2>
+
+    <label>JWT 토큰 (Bearer 포함 입력):</label>
+    <input type="text" id="jwtToken" placeholder="Bearer eyJhbGciOiJIUzI1NiJ9...">
+
+    <button onclick="connect()">1. 소켓 연결하기</button>
+    <button onclick="disconnect()">연결 끊기</button>
+    <br><br>
+
+    <button onclick="sendMessage()">2. 테스트 메시지 전송</button>
+
+    <div id="log"></div>
+
+    <script>
+        let stompClient = null;
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += `<p>> ${message}</p>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function connect() {
+            const token = document.getElementById('jwtToken').value;
+            if (!token) {
+                alert("JWT 토큰을 입력해주세요!");
+                return;
+            }
+
+            stompClient = new window.StompJs.Client({
+                brokerURL: 'ws://localhost:8080/ws', // WebSocketConfig에 설정한 엔드포인트
+                connectHeaders: {
+                    Authorization: token // Interceptor에서 검증할 헤더
+                },
+                debug: function (str) {
+                    log(str); // STOMP 내부 통신 로그 출력
+                },
+                onConnect: function (frame) {
+                    log('✅ 서버에 성공적으로 연결되었습니다!');
+
+                    // [구독(Subscribe) 테스트] - 본인의 채팅방 ID에 맞게 수정
+                    // RoomController나 WebSocketConfig에서 설정한 prefix(/topic 또는 /sub)에 맞춰야 합니다.
+                    const roomId = 1;
+                    stompClient.subscribe(`/sub/chat/room/${roomId}`, function (message) {
+                        log('🔔 메시지 수신됨: ' + message.body);
+                    });
+                },
+                onStompError: function (frame) {
+                    log('❌ Broker 에러 발생: ' + frame.headers['message']);
+                    log('상세 내용: ' + frame.body);
+                }
+            });
+
+            stompClient.activate();
+        }
+
+        function sendMessage() {
+            if (!stompClient || !stompClient.connected) {
+                alert("먼저 소켓에 연결해주세요!");
+                return;
+            }
+
+            // [발행(Publish) 테스트]
+            // MessageController의 @MessageMapping 경로(/app 또는 /pub)와 DTO 구조에 맞게 수정해야 합니다.
+            const destination = '/pub/chat/message';
+            const messagePayload = {
+                roomId: 1,
+                content: "웹소켓 테스트 메시지입니다!"
+            };
+
+            stompClient.publish({
+                destination: destination,
+                body: JSON.stringify(messagePayload)
+            });
+            log('전송 완료: ' + JSON.stringify(messagePayload));
+        }
+
+        function disconnect() {
+            if (stompClient !== null) {
+                stompClient.deactivate();
+                log("🔌 연결이 해제되었습니다.");
+            }
+        }
+    </script>
+</body>
+</html>

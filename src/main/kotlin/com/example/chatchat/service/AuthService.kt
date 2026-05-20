@@ -4,6 +4,7 @@ import com.example.chatchat.domain.user.User
 import com.example.chatchat.dto.auth.LoginRequest
 import com.example.chatchat.dto.auth.SignupRequest
 import com.example.chatchat.repository.UserRepository
+import com.example.chatchat.util.JwtUtil
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -11,7 +12,8 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class AuthService(
     private val userRepository: UserRepository,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
+    private val jwtUtil: JwtUtil
 ) {
 
     @Transactional
@@ -36,7 +38,6 @@ class AuthService(
             throw IllegalArgumentException("아이디 또는 비밀번호가 일치하지 않습니다.")
         }
 
-        // TODO: JWT 토큰 생성 및 반환 로직 구현
-        return "로그인 성공 (JWT 토큰 발급 예정)"
+        return jwtUtil.generateToken(user.loginId)
     }
 }
